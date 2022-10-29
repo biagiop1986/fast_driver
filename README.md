@@ -16,7 +16,7 @@ The core of the kernel space driver is a kernel thread that waits in a waiting q
 
 User space driver is a C++ **Accelerator** class that exposes some API methods to user space programs and communicates with the underlying kernel space drivers.  
 The class embodies the RAII principle as it opens the device file when it is constructed and closes it when it is destroyed.  
-It exposes a method to submit a command and one to wait for a command completion. In the former, a **control** object is used as input: it encapsulates the command to pass to the accelerator and few parameters. The latter is a blocking call that fills an **output** object up as soon as its corresponding command is executed and the output is ready. The submit method enqueues data into the **submit** ring buffer and signals the kernel thread with a **ioctl** invocation. The completion method waits for data to be enqueued in the **completion** buffer.
+It exposes a method to submit a command and one to wait for a command completion. In the former, a **control** object is used as input: it encapsulates the command intended for the accelerator and a few parameters. The latter is a blocking call that fills an **output** object up as soon as its corresponding command is executed and the output is ready. The submit method enqueues data into the **submit** ring buffer and signals the kernel thread with a **ioctl** invocation. The completion method waits for data to be enqueued in the **completion** buffer.
 
 ## 2 Installation
 
