@@ -50,7 +50,7 @@ DEFINE_HASHTABLE(completion_ring_tbl, 16);
 /* Kernel thread */
 struct task_struct *ring_thread = NULL;
 DECLARE_WAIT_QUEUE_HEAD(wq);
-volatile int events_to_process = 0;
+atomic_t events_to_process = ATOMIC_INIT(0);
 
 void execute_command(struct control* p_control, struct output* p_output)
 {
@@ -71,7 +71,7 @@ int ring_thread_body(void* data)
 
 	while(true)
 	{
-		wait_event(wq, ((events_to_process > 0) || kthread_should_stop()));
+		wait_event(wq, ((atomic_read(&events_to_process) > 0) || kthread_should_stop()));
 
 		if(kthread_should_stop())
 		{
@@ -115,7 +115,7 @@ int ring_thread_body(void* data)
 			}
 		}
 
-		--events_to_process;
+		atomic_dec(&events_to_process);
 		schedule();
 	}
 
@@ -376,7 +376,7 @@ long fast_driver_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
 	/* Signal to kernel thread to unblock */
 	printk(KERN_INFO "%s: ioctl call received - signaling kernel thread\n", DEVICE_NAME);
-	++events_to_process;
+	atomic_inc(&events_to_process);
 	wake_up(&wq);
 
 	return 0l;
