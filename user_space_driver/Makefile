@@ -1,5 +1,5 @@
 CXX      = g++
-CXXFLAGS = -fPIC -pedantic -Wall -march=native -O3
+CXXFLAGS = -std=c++17 -fPIC -pedantic -Wall -march=native -O3
 LDFLAGS  = -shared
 
 TARGET  = libuser_driver.so

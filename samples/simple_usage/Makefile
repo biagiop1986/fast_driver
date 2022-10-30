@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -Wall -O3 -march=native -I../../user_space_driver
+CXXFLAGS = -std=c++17 -Wall -O3 -march=native -I../../user_space_driver
 LDFLAGS = -L../../user_space_driver -luser_driver
 
 SOURCES = $(shell echo *.cpp)                                                   
