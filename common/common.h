@@ -1,7 +1,9 @@
 #ifndef __COMMON_H
 #define __COMMON_H
 
+#ifdef __cplusplus
 #include <string.h>
+#endif
 
 /* Driver parameters */
 #define PARAM_MAX 4
