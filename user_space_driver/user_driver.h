@@ -90,11 +90,10 @@ class Accelerator
 
         (
             [&]{
-                memcpy(submit_->controls + submit_->index, &ctrl, sizeof(ctrl));
-	              submit_->index = (submit_->index + 1) % NUM_SLOTS;
-	              ++submit_counter_;
+                memcpy(submit_->controls + (submit_counter_++ % NUM_SLOTS), &ctrl, sizeof(ctrl));
             }(), ...
         );
+        submit_->index = (submit_counter_ % NUM_SLOTS);
 	    ioctl(fd_, 0ul);
     }
 
