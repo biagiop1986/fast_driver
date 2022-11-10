@@ -12,6 +12,7 @@
 #include <linux/proc_fs.h>
 #include <linux/slab.h> /* kmalloc */
 #include <linux/sched.h> /* task_struct* current */
+#include <linux/timekeeping.h> 
 #include <linux/types.h> /* size_t */
 #include <linux/uaccess.h> /* copy_from/to_user */
 #include <linux/wait.h> /* wait queue */
@@ -60,6 +61,7 @@ void execute_command(struct control* p_control, struct output* p_output)
 
 int ring_thread_body(void* data)
 {
+	ktime_t start, stop;
 	int picked_index;
 	unsigned bkt;
 	struct submission_ring_buffer *submit;
@@ -82,6 +84,7 @@ int ring_thread_body(void* data)
 
 		hash_for_each(submission_ring_tbl, bkt, submit, node)
 		{
+			start = ktime_get_real();
 			hash_for_each_possible(completion_ring_tbl, complete, node, submit->pid)
 			{
 				if(complete->pid == submit->pid)
@@ -113,7 +116,11 @@ int ring_thread_body(void* data)
 				printk(KERN_INFO "%s: command[%u] from pid %d completed - output[%llu]\n",
 					DEVICE_NAME, p_control->command, submit->pid, p_output->outputs[0]);
 			}
+			stop = ktime_get_real();
 		}
+
+		printk(KERN_INFO "%s: dequeue: %lld us\n", DEVICE_NAME, start);
+		printk(KERN_INFO "%s: completion: %lld us\n", DEVICE_NAME, stop);
 
 		atomic_dec(&events_to_process);
 		schedule();
@@ -288,7 +295,7 @@ int fast_driver_release(struct inode *inode, struct file *filp)
 	/* Clear reservation state from allocated pages and free ring buffers*/
 	if(submit)
 	{
-		printk(KERN_INFO "%s: removing submit ring buffer\n", DEVICE_NAME);
+		printk(KERN_INFO "%s: removing submission ring buffer\n", DEVICE_NAME);
 		for(sptr = submit; sptr < submit + get_mem_size(sizeof(struct submission_ring_buffer)); sptr += PAGE_SIZE)
 			ClearPageReserved(virt_to_page(sptr));
 		kfree(submit);
@@ -327,7 +334,7 @@ int fast_driver_mmap(struct file *filp, struct vm_area_struct *vma)
 
 		if(!submit)
 		{
-			printk(KERN_CRIT "%s: submit ring buffer cannot be retrieved\n", DEVICE_NAME);
+			printk(KERN_CRIT "%s: submission ring buffer cannot be retrieved\n", DEVICE_NAME);
 			return -EINVAL;
 		}
 
@@ -336,7 +343,7 @@ int fast_driver_mmap(struct file *filp, struct vm_area_struct *vma)
 		/* Force shared mapping on this memory area */
 		vma->vm_flags |= VM_SHARED;
 
-		/* Get submit ring buffer page number */
+		/* Get submission ring buffer page number */
 		pfn = __pa(submit) >> PAGE_SHIFT;
 	}
 	else
@@ -359,7 +366,7 @@ int fast_driver_mmap(struct file *filp, struct vm_area_struct *vma)
 		/* Force shared mapping on this memory area */
 		vma->vm_flags |= VM_SHARED;
 
-		/* Get submit ring buffer page number */
+		/* Get submission ring buffer page number */
 		pfn = __pa(complete) >> PAGE_SHIFT;
 	}
 
